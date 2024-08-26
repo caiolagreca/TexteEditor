@@ -25,7 +25,8 @@ namespace TextEditor.Controllers
         // GET: Docs
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Docs.Include(d => d.User);
+            var applicationDbContext = from c in _context.Docs select c;
+            applicationDbContext = applicationDbContext.Where(a => a.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier));
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -40,7 +41,7 @@ namespace TextEditor.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Context,UserId")] Doc doc)
+        public async Task<IActionResult> Create([Bind("Id,Title,Content,UserId")] Doc doc)
         {
             if (ModelState.IsValid)
             {
@@ -48,14 +49,14 @@ namespace TextEditor.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", doc.UserId);
+            //ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", doc.UserId);
             return View(doc);
         }
 
         // GET: Docs/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            if (id == null || _context.Docs == null)
             {
                 return NotFound();
             }
@@ -79,7 +80,7 @@ namespace TextEditor.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Context,UserId")] Doc doc)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Content,UserId")] Doc doc)
         {
             if (id != doc.Id)
             {
